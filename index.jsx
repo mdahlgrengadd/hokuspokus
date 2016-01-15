@@ -126,7 +126,7 @@ class ExampleParent extends React.Component {
     super(props);
 
     this.state = {
-      audioFile:'./resources/test.mp3'
+      audioFile:'./resources/demo.wav'
     };
   }
   render () {
