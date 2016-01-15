@@ -1,7 +1,7 @@
 # Hokus Pokus
 React component for time-stretching (slow down/speed up) audio. Uses react-wavesurfer, Echo66's PhaseVocoder.js and Wavesjs granular synth.
 
-# Dependencies, need to be installed manually, i.e. "npm install babel-core" ..etc..
+## Dependencies, need to be installed manually, i.e. "npm install babel-core" ..etc..
 
   -  "babel-core": "^6.4.0",
   -  "babel-loader": "^6.2.1",
@@ -17,3 +17,7 @@ React component for time-stretching (slow down/speed up) audio. Uses react-waves
 
 Note: react-wavesurfer includes its on react which might lead to errors with multiple instances in webpack. Delete the react which is included in react-wavesurfer/node_modules and it should work.   
   
+## Using it
+
+Type 'webpack-dev-server' in console, then point your browser to localhost:8080 
+
