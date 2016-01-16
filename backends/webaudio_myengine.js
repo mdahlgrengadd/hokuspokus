@@ -1,3 +1,9 @@
+// Wavesurfer backend to use IrcamWaves as audio backend.
+// 
+// It starts both a scheduled and transported engines. 
+// The scheduled engine is supposed to be used to feed
+// a pitch detector and not used for playback (WIP).
+
 'use strict';
 var Waves = require('waves');
 var wavesAudio = Waves.audio;
@@ -9,7 +15,12 @@ var scheduler = wavesAudio.getScheduler();
 // the granularEngine is used for pitch tracking
 var granularEngine = new wavesAudio.GranularEngine();
 
-var MyEngine = require('./phasevocoder-engine.js')
+// A custom engine that combines granular synth and phasevocoder.
+// The input buffer to the granular synth is first passed
+// to phasevododer to slow down audio by a factor of 2.
+// Could be replaced with a clean granular synth or similar...
+// var MyEngine = wavesAudio.GranularEngine;
+var MyEngine = require('./phasevocoder-engine.js');
 
 scheduler.add(granularEngine);
 

@@ -22,3 +22,6 @@ Note: react-wavesurfer includes its on react which might lead to errors with mul
 
 Type 'webpack-dev-server' in console, then point your browser to localhost:8080 
 
+## TODO
+
+- Squash lots of bugs and lazy coding
