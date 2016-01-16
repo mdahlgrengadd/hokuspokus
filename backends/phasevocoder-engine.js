@@ -1,6 +1,6 @@
 'use strict';
-
-var wavesAudio = require('waves-audio');
+var Waves = require('waves');
+var wavesAudio = Waves.audio;
 var MAX_ALPHA = 2 ; // Max slowdown, used for calculating the maximum length of temporary buffers
 function optOrDef(opt, def) {
   if(opt !== undefined)

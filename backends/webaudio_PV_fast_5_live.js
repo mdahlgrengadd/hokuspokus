@@ -17,7 +17,7 @@ var BUFFER_SIZE = 1024;
 var FRAME_SIZE  = 1024;
 
 
-WaveSurfer.WebAudio = {
+WaveSurfer.Echo66PV = {
     scriptBufferSize: BUFFER_SIZE,
     PLAYING_STATE: 0,
     PAUSED_STATE: 1,
@@ -28,21 +28,21 @@ WaveSurfer.WebAudio = {
     },
 
     getAudioContext: function () {
-        if (!WaveSurfer.WebAudio.audioContext) {
-            WaveSurfer.WebAudio.audioContext = new (
+        if (!WaveSurfer.Echo66PV.audioContext) {
+            WaveSurfer.Echo66PV.audioContext = new (
                 window.AudioContext || window.webkitAudioContext
             );
         }
-        return WaveSurfer.WebAudio.audioContext;
+        return WaveSurfer.Echo66PV.audioContext;
     },
 
     getOfflineAudioContext: function (sampleRate) {
-        if (!WaveSurfer.WebAudio.offlineAudioContext) {
-            WaveSurfer.WebAudio.offlineAudioContext = new (
+        if (!WaveSurfer.Echo66PV.offlineAudioContext) {
+            WaveSurfer.Echo66PV.offlineAudioContext = new (
                 window.OfflineAudioContext || window.webkitOfflineAudioContext
             )(1, 2, sampleRate);
         }
-        return WaveSurfer.WebAudio.offlineAudioContext;
+        return WaveSurfer.Echo66PV.offlineAudioContext;
     },
 
     init: function (params) {
@@ -65,9 +65,9 @@ WaveSurfer.WebAudio = {
         this.scheduledPause = null;
 
         this.states = [
-            Object.create(WaveSurfer.WebAudio.state.playing),
-            Object.create(WaveSurfer.WebAudio.state.paused),
-            Object.create(WaveSurfer.WebAudio.state.finished)
+            Object.create(WaveSurfer.Echo66PV.state.playing),
+            Object.create(WaveSurfer.Echo66PV.state.paused),
+            Object.create(WaveSurfer.Echo66PV.state.finished)
         ];
 
         this.createVolumeNode();
@@ -435,7 +435,7 @@ WaveSurfer.WebAudio = {
     },
 
     seekTo: function (start, end) {
-        this.source.loop = true;
+        this.source.loop = true; //FIXME: Should be instance variable
         
         if (start == null) {
             start = this.getCurrentTime();
@@ -466,7 +466,13 @@ WaveSurfer.WebAudio = {
             this.source.loopEnd = this.getDuration();
         } else {
             this.source.loopStart = start;
-            this.source.loopEnd = end+FRAME_SIZE*1/44100;
+
+            //The bufferdPV plays in FRAME_SIZE chunks.
+            //If the last chunk happen to overlap the loop region end,
+            //it will not be played... so add one FRAME_SIZE to
+            //the selection. FIXME: This should be fixed inside
+            //bufferdPV.
+            this.source.loopEnd = end+FRAME_SIZE*1/44100; 
         }
 
 
@@ -551,9 +557,9 @@ WaveSurfer.WebAudio = {
     }
 };
 
-WaveSurfer.WebAudio.state = {};
+WaveSurfer.Echo66PV.state = {};
 
-WaveSurfer.WebAudio.state.playing = {
+WaveSurfer.Echo66PV.state.playing = {
     init: function () {
         console.log("addOnAudioProcess");
         this.addOnAudioProcess();
@@ -567,7 +573,7 @@ WaveSurfer.WebAudio.state.playing = {
     }
 };
 
-WaveSurfer.WebAudio.state.paused = {
+WaveSurfer.Echo66PV.state.paused = {
     init: function () {
         //this.removeOnAudioProcess();
     },
@@ -580,7 +586,7 @@ WaveSurfer.WebAudio.state.paused = {
     }
 };
 
-WaveSurfer.WebAudio.state.finished = {
+WaveSurfer.Echo66PV.state.finished = {
     init: function () {
         this.removeOnAudioProcess();
         this.fireEvent('finish');
@@ -593,6 +599,6 @@ WaveSurfer.WebAudio.state.finished = {
     }
 };
 
-WaveSurfer.util.extend(WaveSurfer.WebAudio, WaveSurfer.Observer);
+WaveSurfer.util.extend(WaveSurfer.Echo66PV, WaveSurfer.Observer);
 
-export default WaveSurfer;
+export default WaveSurfer.Echo66PV;

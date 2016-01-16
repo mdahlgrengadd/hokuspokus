@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Wavesurfer from 'subclassed-wavesurfer.js';
 
-
 class RegionsExample extends React.Component {
   constructor(props) {
     super(props);
@@ -36,6 +35,12 @@ class RegionsExample extends React.Component {
     });
   }
 
+  setupPlugins(arg) {
+      //Could be used to wire up wavesurfer plugins
+      //instead of subclassing react-wavesurfer. 
+      //Wavesurfer object passed in as arg.wavesurfer.
+  }
+
   render() {
     const process = (e) => {
       //do something...
@@ -61,6 +66,7 @@ class RegionsExample extends React.Component {
             regions={this.state.regions}
             options={waveOptions}
             playing={this.state.playing}
+            onReady={this.setupPlugins}
             //onAudioprocess={process}
           />
       </div>
@@ -79,8 +85,10 @@ class ExampleParent extends React.Component {
   }
   render () {
     return (
+
       <div className='example-list'>
         <h1>react-wavesurfer examples</h1>
+        
         <RegionsExample audioFile={this.state.audioFile} />
       </div>
     );

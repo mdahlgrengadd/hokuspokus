@@ -1,6 +1,9 @@
 'use strict';
-var wavesAudio = require('waves-audio');
-//var wavesLoaders = require('waves-loaders');
+var Waves = require('waves');
+var wavesAudio = Waves.audio;
+const WaveSurfer = require('react-wavesurfer/node_modules/wavesurfer.js/dist/wavesurfer.cjs.js');
+
+
 var scheduler = wavesAudio.getScheduler();
 
 // the granularEngine is used for pitch tracking
@@ -515,3 +518,5 @@ WaveSurfer.IrcamWaves.state.finished = {
 };
 
 WaveSurfer.util.extend(WaveSurfer.IrcamWaves, WaveSurfer.Observer);
+
+export default WaveSurfer.IrcamWaves;

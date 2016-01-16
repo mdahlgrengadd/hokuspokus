@@ -66,7 +66,13 @@ function BufferedPV(frameSize) {
         } while (sampleCounter < outputAudioBuffer.length && _position + _frameSize < _loopEnd);
           
           if (_position + _frameSize >= _loopEnd) { 
-            // Return the amount to skip when looping when in/out buffers differ in size.
+            // Return the amount to skip when looping when in/out buffers differ in size,
+            // ie when selected loop region is not evenly divided by _frameSize.
+            // FIXME: Its not correct handling because we play bytes outside the selected
+            // loop region and because of that we have to skip the same amount at the loop beginning.
+            // It also requires that the loop region is extended with one framesize. 
+            // This is should be fixed so that this amount of bytes is instead copied from the 
+            // loopStart to loopEnd when looping. 
              return { msg: 'done', buf_delta: Math.round(_position + _frameSize - _loopEnd)} 
           }; 
 
