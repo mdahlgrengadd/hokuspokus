@@ -1,96 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Wavesurfer from 'react-wavesurfer';
+import Wavesurfer from 'subclassed-wavesurfer.js';
 
 
-
-/**
- * Simple example of a React component with a Wavesurfer
- */
-class SimpleExample extends React.Component {
+class RegionsExample extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      playing: false
-    };
-    this.handleTogglePlay = this.handleTogglePlay.bind(this);
-  }
-  handleTogglePlay() {
-    this.setState({
-      playing: !this.state.playing
-    });
-  }
-  render() {
-    const waveOptions = {
-      scrollParent: true,
-      height: 140,
-      progressColor: '#6c718c',
-      waveColor: '#c4c8dc',
-      normalize: true
-    };
-    const process = (e) => {
-      console.log(e);
-    };
-    return (
-      <div className='example'>
-        <p>Clean Example</p>
-        <button onClick={this.handleTogglePlay}>toggle play</button>
-        <Wavesurfer
-          options={waveOptions}
-          onAudioprocess={process}
-          audioFile={this.props.audioFile}
-          playing={this.state.playing}
-        />
-      </div>
-    );
-  }
-}
-
-
-/**
- * Example with the timeline plugin
- */
-/*const WaveSurferTimeline = require('wavesurfer.js/plugin/wavesurfer.timeline.js');
-
-class TimelineExample extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-  addTimeline(e) {
-    // Init Timeline plugin
-    var timeline = Object.create(WaveSurferTimeline);
-    timeline.init({
-        wavesurfer: e.wavesurfer,
-        container: '#wave-timeline'
-    });
-  }
-  render() {
-    return (
-      <div className='example'>
-        <p>With timeline plugin enabled and a few wavesurfer options set</p>
-          <div id='wave-timeline' />
-          <Wavesurfer
-            audioFile={this.props.audioFile}
-            onReady={this.addTimeline}
-            options={{
-              progressColor: '#906643',
-              waveColor: '#eee',
-              height: 50
-            }}
-          />
-      </div>
-    );
-  }
-}*/
-
-
-/**
- * Example with the timeline plugin
- */
-/*class RegionsExample extends React.Component {
-  constructor(props) {
-    super(props);
     this.state = {
       regions: [{
         id: 'One',
@@ -106,19 +22,51 @@ class TimelineExample extends React.Component {
         end: 13
       }]
     };
+
+    // Handle Playback
+    this.state = {
+      playing: false
+    };
+    this.handleTogglePlay = this.handleTogglePlay.bind(this);
   }
+
+  handleTogglePlay() {
+    this.setState({
+      playing: !this.state.playing
+    });
+  }
+
   render() {
+    const process = (e) => {
+      //do something...
+    };
+
+    const waveOptions = {
+      backend: 'WebAudio',
+      audioRate: 0.5,
+      scrollParent: true,
+      height: 140,
+      progressColor: '#6c718c',
+      waveColor: '#c4c8dc',
+      normalize: true
+    };
+
+
     return (
       <div className='example'>
         <p>With regions plugin enabled</p>
+        <button onClick={this.handleTogglePlay}>toggle play</button>
           <Wavesurfer
             audioFile={this.props.audioFile}
             regions={this.state.regions}
+            options={waveOptions}
+            playing={this.state.playing}
+            //onAudioprocess={process}
           />
       </div>
     );
   }
-}*/
+}
 
 
 class ExampleParent extends React.Component {
@@ -133,7 +81,7 @@ class ExampleParent extends React.Component {
     return (
       <div className='example-list'>
         <h1>react-wavesurfer examples</h1>
-        <SimpleExample audioFile={this.state.audioFile} />
+        <RegionsExample audioFile={this.state.audioFile} />
       </div>
     );
   }
