@@ -8,21 +8,21 @@
 var Waves = require('waves');
 var wavesAudio = Waves.audio;
 const WaveSurfer = require('react-wavesurfer/node_modules/wavesurfer.js/dist/wavesurfer.cjs.js');
-
-
+//const MAX_ALPHA = 1.5;
 var scheduler = wavesAudio.getScheduler();
 
 // the granularEngine is used for pitch tracking
-var granularEngine = new wavesAudio.GranularEngine();
+//var granularEngine = new wavesAudio.GranularEngine();
 
 // A custom engine that combines granular synth and phasevocoder.
 // The input buffer to the granular synth is first passed
 // to phasevododer to slow down audio by a factor of 2.
 // Could be replaced with a clean granular synth or similar...
 // var MyEngine = wavesAudio.GranularEngine;
-var MyEngine = require('./phasevocoder-engine.js');
+//var MyEngine = require('./phasevocoder-engine.js');
+var MyEngine = require('./phasevocoder-player-engine.js');
 
-scheduler.add(granularEngine);
+//scheduler.add(granularEngine);
 
 
 //http://stackoverflow.com/questions/4467539/javascript-modulo-not-behaving
@@ -144,9 +144,10 @@ WaveSurfer.IrcamWaves = {
         var my = this;
 
         this.scriptNode.onaudioprocess = function (e) {
-            var time = my.getCurrentTime();
+            var time = my.getCurrentTime()/my.playbackRate;
 
-            if (time >= my.getDuration()  ||  time < 0) {
+            if (time >= my.getDuration()/my.playbackRate  ||  time < 0) {
+                console.log("BANG");
                 my.setState(my.FINISHED_STATE);
                 my.fireEvent('pause');
             } else if (time >= my.scheduledPause && my.playControl && !my.playControl.loop) {
@@ -221,7 +222,7 @@ WaveSurfer.IrcamWaves = {
     getPeaks: function (length) {
         var sampleSize = this.buffer.length / length;
         var sampleStep = ~~(sampleSize / 10) || 1;
-        console.log("sampleStep: " + sampleStep);
+
         var channels = this.buffer.numberOfChannels;
         var splitPeaks = [];
         var mergedPeaks = [];
@@ -294,6 +295,12 @@ WaveSurfer.IrcamWaves = {
         this.createSource();
 
     },
+    // Set function to be called when engine processes the clip.
+    // Used to update the UI to show which part of audio has been processed.
+    // cbfunc receices percentage (0..1) of audio that has been processed. 
+    setProcessingCallback: function(cbfunc) {
+        this._processingCallback = cbfunc;
+    },
 
     createSource: function () {
         
@@ -321,9 +328,12 @@ WaveSurfer.IrcamWaves = {
                   // create transport with play control and transported granular engine
                   self.transportedGranularEngine = new MyEngine({
                     buffer: self.source.buffer,
-                    cyclic: true
+                    cyclic: true,
+                    fadeTime: 0.0,
+                    timeStretch: 1/this.playbackRate
                   });
                   self.playControl = new wavesAudio.PlayControl(self.transportedGranularEngine);
+                  self.playControl.speed = 1.0;
                   self.transportedGranularEngine.connect(self.analyser);
 
                   // Start the granularEngine used for pitch detection 
@@ -341,6 +351,23 @@ WaveSurfer.IrcamWaves = {
                     self.scheduledGranularEngine.resamplingVar = 0.0;
                     self.transportedGranularEngine.resamplingVar = 0.0;
 
+                    var timeout = {};
+                    function myTimeoutFunction()
+                    {
+
+                        var processed = self.transportedGranularEngine.getBgProcessedPercent();
+                        if (processed == 1) {
+                            clearTimeout(timeout);
+                        }
+                        if (self._processingCallback) {
+                            self._processingCallback(processed);
+                        }
+
+                    }
+
+                    myTimeoutFunction();
+                    timeout = setInterval(myTimeoutFunction, 100);
+
         
     },
 
@@ -356,18 +383,23 @@ WaveSurfer.IrcamWaves = {
     },
 
     seekTo: function (start, end) {
-        
+
         var doLoop = true;
         
         if (start == null) {
-            start = this.getCurrentTime();
-            if (start >= this.getDuration()) {
+            start = this.getCurrentTime()/this.playbackRate;
+            if (start >= this.getDuration()/this.playbackRate) {
                 start = 0;
             }
-        }
+        } else {
+           start /= this.playbackRate;
+        } 
+
         if (end == null) {
-            end = this.getDuration();
+            end = this.getDuration()/this.playbackRate;
             doLoop = false;
+        } else {
+            end /= this.playbackRate;
         }
         //this.startPosition = start; 
         this.startPosition = 0;  
@@ -382,23 +414,22 @@ WaveSurfer.IrcamWaves = {
         // outside loop region. (Also when playing in reverse (speed < 0), 
         // the same happens at loopStart).
         if (!doLoop) {
-            this.playControl.setLoopBoundaries(0, this.getDuration());
+            this.playControl.setLoopBoundaries(0, this.getDuration()/this.playbackRate);
         } else {
             this.playControl.setLoopBoundaries(start, end);
         }
  
         this.playControl.seek (start);
+
         this.playControl.loop = doLoop;
         
         this.scheduledPause = end;
-        //console.log("start: " + start + " end: " + end);    
         return { start: start, end: end };
     },
 
     getPlayedTime: function () {
-        console.log(this.playControl.currentPosition);
         this.scheduledGranularEngine.position = this.playControl.currentPosition;
-        return (this.playControl.currentPosition);//.mod(this.getDuration());
+        return (this.playControl.currentPosition*this.playbackRate);//.mod(this.getDuration());
         //return (this.ac.currentTime - this.lastPlay) * this.playbackRate * this.playControl.speed;
     },
 
@@ -428,8 +459,6 @@ WaveSurfer.IrcamWaves = {
 
         this.playControl.start();
         this.playControl.seek (start);
-
-        //console.log(start);
 
         this.setState(this.PLAYING_STATE);
 
@@ -502,7 +531,6 @@ WaveSurfer.IrcamWaves.state.paused = {
         if (this.playControl) {
             this.playControl.pause();
         }
-        
 
     },
     getPlayedPercents: function () {
@@ -524,7 +552,7 @@ WaveSurfer.IrcamWaves.state.finished = {
         return 1;
     },
     getCurrentTime: function () {
-        return this.getDuration();
+        return this.getDuration()/this.playbackRate;
     }
 };
 

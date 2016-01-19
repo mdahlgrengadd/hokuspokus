@@ -18,6 +18,9 @@ class Wavesurfer extends myWavesurfer {
         this._wavesurfer.util.extend(this._wavesurfer, WavesurferRegionsPlugin);
         //this._wavesurfer.util.extend(this._wavesurfer.WebAudio, WavesurferEcho66Backend);
         this._wavesurfer.util.extend(this._wavesurfer.WebAudio, WavesurferIrcamWavesBackend);
+        this._wavesurfer.WebAudio.setProcessingCallback( (pos) => {
+            //console.log("processing: "+pos);
+        });
 
         this._wavesurfer.on('ready', () => {
             // Regions
@@ -29,6 +32,9 @@ class Wavesurfer extends myWavesurfer {
         })
 
         this.setupRegionHandling();
+
+        
+
 
     }
 
@@ -61,6 +67,7 @@ class Wavesurfer extends myWavesurfer {
                             this._selectedRegion = null;
 
                             this._wavesurfer.backend.seekTo(seekpos);
+
                         } else { // end if seekpos...
 
                             this._selectedRegion.update({
@@ -72,6 +79,7 @@ class Wavesurfer extends myWavesurfer {
                         }
                     } else { // end if this._selectedRegion..
                         this._wavesurfer.backend.seekTo(seekpos);
+
                     }
 
                     this._wavesurfer.drawer.progress(this._wavesurfer.backend.getPlayedPercents());
@@ -84,21 +92,48 @@ class Wavesurfer extends myWavesurfer {
     }
 
 
-
   // update wavesurfer rendering manually
-  // FIXME: Playback is now started in super.componentWillReceiveProps() and
-  //        after that we seek to selectedRegion which will cause cracks in audio.
   componentWillReceiveProps(nextProps) {
-    super.componentWillReceiveProps(nextProps);
-    console.log(this._selectedRegion);
-
+    if (this.props.audioFile !== nextProps.audioFile) {
+      this._loadAudio(nextProps.audioFile);
+    }
+    if (typeof nextProps.pos === 'number' && this._fileLoaded) {
+      this._seekTo(nextProps.pos);
+      console.log("subclassSeek: "+nextProps.pos);
+    }
+    /*if (nextProps.regions) {
+      const _regionsToDelete = this._wavesurfer.regions.list;
+      nextProps.regions.forEach((region) => {
+        // update region
+        if (region.id && this._wavesurfer.regions.list[region.id]) {
+          this._wavesurfer.regions.list[region.id].update(region);
+        } else {
+          // new region
+          this.wavesurfer.addRegion(region);
+        }
+      });
+      if (_regionsToDelete.length) {
+        _regionsToDelete.forEach((regionToDelete) => {
+          this._wavesurfer.regions.list[regionToDelete.id].remove();
+        });
+      }
+    }*/
     if (this.props.playing !== nextProps.playing) {
-      if (nextProps.playing && this._selectedRegion != null) {
-        this._wavesurfer.backend.seekTo(this._selectedRegion.start, this._selectedRegion.end);
+      if (nextProps.playing) {
+        this._wavesurfer.backend.play();
+        if(this._selectedRegion != null) {
+            this._wavesurfer.backend.seekTo(this._selectedRegion.start, this._selectedRegion.end);
+        }
+
+      } else {
+        this._wavesurfer.pause();
       }
     }
   }
-
 }
+
+// Default in super is pos = 0, which will reset the player on pause.
+// Override it so that play/pause resumes from last played position.
+Wavesurfer.defaultProps.pos = undefined; 
 
 export default Wavesurfer;

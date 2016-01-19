@@ -6,6 +6,7 @@ function BufferedPV(frameSize) {
     var _bufferL, _bufferR;
     var _loopStart, _loopEnd;
     var _position = 0;
+    var _newPosition = undefined;
     var _newAlpha = 1;
 
     var _midBufL = new CBuffer(Math.round(_frameSize * 2));

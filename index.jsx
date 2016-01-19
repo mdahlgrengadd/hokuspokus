@@ -62,6 +62,7 @@ class RegionsExample extends React.Component {
         <p>With regions plugin enabled</p>
         <button onClick={this.handleTogglePlay}>toggle play</button>
           <Wavesurfer
+            pos={undefined} // undefined = Start from last position. Otherwise a number specifying the offset in seconds from beginning.
             audioFile={this.props.audioFile}
             regions={this.state.regions}
             options={waveOptions}
@@ -90,6 +91,7 @@ class ExampleParent extends React.Component {
         <h1>react-wavesurfer examples</h1>
         
         <RegionsExample audioFile={this.state.audioFile} />
+
       </div>
     );
   }

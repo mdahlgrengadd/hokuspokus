@@ -164,10 +164,10 @@ class MyEngine extends wavesAudio.AudioTimeEngine {
 
 
           this._canPlay = false;
+          this._bgRenderDone = false;
           this._pv = new BufferedPV(4096*2);
           this._pv.alpha = 2;
           
-          //console.log("THIS.BUFFER: " +this.buffer.duration);
           this._pv.set_audio_buffer(this.buffer);
 
           this.renderbuffer = this.audioContext.createBuffer(2, 1024*4, 44100);
@@ -202,23 +202,24 @@ class MyEngine extends wavesAudio.AudioTimeEngine {
       var pv_info = {};
       this.scriptNode.onaudioprocess = function(e) {
 
+        // Do it twice per cycle to be ahead of granular synth that reads this output buffer.
         for (var i=0;i<2;i++) {
-        if (my._canPlay) {
+        if (my._canPlay && !my._bgRenderDone) {
             
-
-          //my._pv.position = my._newPosition;
-          //my._pv.position = (my._pv.position)% ( 10*44100 - 13*44100);
           my._pv.set_bounds(my._pv.position, my._pv.position+1024*4);
           pv_info = my._pv.process(my.renderbuffer);
           var il = my.renderbuffer.getChannelData(0); 
           var ir = my.renderbuffer.getChannelData(1);
           var ol = my.outputbuffer.getChannelData(0);
           var or = my.outputbuffer.getChannelData(1);
-          ol.set(il, my._pv.position*my._pv.alpha);
-          or.set(ir, my._pv.position*my._pv.alpha);
+          if (my._pv.position*my._pv.alpha+il.length<=ol.length) {
+            ol.set(il, my._pv.position*my._pv.alpha);
+            or.set(ir, my._pv.position*my._pv.alpha);
+          } else {
+            console.log("Background phasevocoder done...");
+            my._bgRenderDone = true;
+          }
           
-        } else {
-          //console.log("DoneAudio!");
         }
 
 
@@ -233,7 +234,7 @@ class MyEngine extends wavesAudio.AudioTimeEngine {
    */
   get bufferDuration() {
     if (this.buffer) {
-      var bufferDuration = this.buffer.duration;
+      var bufferDuration = this.outputbuffer.duration;
 
       if (this.wrapAroundExtension)
         bufferDuration -= this.wrapAroundExtension;
@@ -300,7 +301,7 @@ class MyEngine extends wavesAudio.AudioTimeEngine {
         grainPosition += (2.0 * Math.random() - 1) * this.positionVar;
 
       var bufferDuration = this.bufferDuration;
-
+      
       // wrap or clip grain position and duration into buffer duration
       if (grainPosition < 0 || grainPosition >= bufferDuration) {
         if (this.cyclic) {
